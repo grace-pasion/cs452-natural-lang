@@ -1,0 +1,1275 @@
+[
+  {
+    "question": "How many active memberships are there for each membership type?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    mt.type_name,\n    COUNT(m.membership_id) AS active_memberships\nFROM \n    Membership m\nJOIN \n    MembershipType mt ON m.membership_type_id = mt.membership_type_id\nWHERE \n    m.status = 'Active'\nGROUP BY \n    mt.type_name",
+    "columns": [
+      "type_name",
+      "active_memberships"
+    ],
+    "rows": [
+      [
+        "Family",
+        8
+      ],
+      [
+        "Individual",
+        9
+      ],
+      [
+        "Premium",
+        6
+      ],
+      [
+        "Student",
+        6
+      ]
+    ],
+    "answer": "There are 8 active Family memberships, 9 active Individual memberships, 6 active Premium memberships, and 6 active Student memberships.",
+    "error": null,
+    "tokens": {
+      "input": 955,
+      "output": 88
+    },
+    "cost_usd": 0.000131
+  },
+  {
+    "question": "Which membership type has generated the most completed payment revenue?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    mt.membership_type_id,\n    mt.type_name,\n    SUM(p.amount) AS total_revenue\nFROM \n    MembershipType mt\nJOIN \n    Membership m ON mt.membership_type_id = m.membership_type_id\nJOIN \n    Payment p ON m.membership_id = p.membership_id\nWHERE \n    p.payment_status = 'Completed'\nGROUP BY \n    mt.membership_type_id, mt.type_name\nORDER BY \n    total_revenue DESC\nLIMIT 1",
+    "columns": [
+      "membership_type_id",
+      "type_name",
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        3,
+        "Family",
+        36096
+      ]
+    ],
+    "answer": "The membership type that has generated the most completed payment revenue is the \"Family\" type, with a total revenue of $36,096.",
+    "error": null,
+    "tokens": {
+      "input": 987,
+      "output": 130
+    },
+    "cost_usd": 0.000151
+  },
+  {
+    "question": "List the Family memberships and how many members each one covers.",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    mmt.type_name AS membership_type,\n    COUNT(*) AS member_count\nFROM \n    MembershipType mmt\nJOIN \n    Membership ms ON mmt.membership_type_id = ms.membership_type_id\nJOIN \n    Member mem ON ms.membership_id = mem.membership_id\nWHERE \n    mem.member_role IN ('Primary', 'Spouse', 'Child', 'Dependent')\nGROUP BY \n    mmt.type_name",
+    "columns": [
+      "membership_type",
+      "member_count"
+    ],
+    "rows": [
+      [
+        "Family",
+        41
+      ],
+      [
+        "Individual",
+        12
+      ],
+      [
+        "Premium",
+        22
+      ],
+      [
+        "Senior",
+        5
+      ],
+      [
+        "Student",
+        8
+      ]
+    ],
+    "answer": "The Family memberships cover a total of 41 members.",
+    "error": null,
+    "tokens": {
+      "input": 991,
+      "output": 101
+    },
+    "cost_usd": 0.00014
+  },
+  {
+    "question": "Which facilities can Student members access and at what access level?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    f.facility_name,\n    mf.access_level\nFROM \n    Facility f\nJOIN \n    MembershipType mt ON f.facility_id = mf.facility_id\nJOIN \n    Membership m ON mt.membership_type_id = m.membership_type_id\nJOIN \n    Member mem ON m.membership_id = mem.membership_id\nWHERE \n    mem.member_role = 'Student'",
+    "columns": [],
+    "rows": [],
+    "answer": null,
+    "error": "OperationalError: no such column: mf.access_level",
+    "tokens": {
+      "input": 787,
+      "output": 80
+    },
+    "cost_usd": 0.000111
+  },
+  {
+    "question": "Who has the most reservations, and how many?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    m.member_id,\n    m.first_name,\n    m.last_name,\n    COUNT(r.reservation_id) AS reservation_count\nFROM \n    Member m\nJOIN \n    Reservation r ON m.member_id = r.member_id\nGROUP BY \n    m.member_id, m.first_name, m.last_name\nORDER BY \n    reservation_count DESC\nLIMIT 1",
+    "columns": [
+      "member_id",
+      "first_name",
+      "last_name",
+      "reservation_count"
+    ],
+    "rows": [
+      [
+        2074,
+        "Layla",
+        "Walker",
+        4
+      ]
+    ],
+    "answer": "Layla Walker has the most reservations with a total of 4.",
+    "error": null,
+    "tokens": {
+      "input": 965,
+      "output": 90
+    },
+    "cost_usd": 0.000133
+  },
+  {
+    "question": "How many reservations were cancelled for each facility?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    f.facility_name,\n    COUNT(r.reservation_id) AS cancelled_reservations\nFROM \n    Reservation r\nJOIN \n    Facility f ON r.facility_id = f.facility_id\nWHERE \n    r.status = 'Cancelled'\nGROUP BY \n    f.facility_name",
+    "columns": [
+      "facility_name",
+      "cancelled_reservations"
+    ],
+    "rows": [
+      [
+        "Executive Golf Course",
+        6
+      ],
+      [
+        "Fitness Center",
+        2
+      ],
+      [
+        "Indoor Pool",
+        1
+      ],
+      [
+        "Lakeside Grill",
+        1
+      ],
+      [
+        "Main Golf Course",
+        1
+      ],
+      [
+        "Private Event Room",
+        1
+      ],
+      [
+        "Tennis Court 1",
+        1
+      ],
+      [
+        "Tennis Court 2",
+        2
+      ],
+      [
+        "Yoga Studio",
+        2
+      ]
+    ],
+    "answer": "There were 6 cancellations at the Executive Golf Course, 2 at the Fitness Center, 1 at the Indoor Pool, 1 at Lakeside Grill, 1 at the Main Golf Course, 1 in the Private Event Room, 1 at Tennis Court 1, 2 at Tennis Court 2, and 2 in the Yoga Studio.",
+    "error": null,
+    "tokens": {
+      "input": 1003,
+      "output": 133
+    },
+    "cost_usd": 0.000154
+  },
+  {
+    "question": "Which memberships have a failed payment?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT DISTINCT m.*\nFROM Membership m\nJOIN Payment p ON m.membership_id = p.membership_id\nWHERE p.payment_status = 'Failed'",
+    "columns": [
+      "membership_id",
+      "membership_type_id",
+      "start_date",
+      "end_date",
+      "status",
+      "billing_frequency",
+      "auto_renew"
+    ],
+    "rows": [
+      [
+        1001,
+        4,
+        "2023-08-13",
+        "2027-02-08",
+        "Active",
+        "Monthly",
+        0
+      ],
+      [
+        1002,
+        3,
+        "2024-07-29",
+        "2026-09-29",
+        "Expired",
+        "Annual",
+        0
+      ],
+      [
+        1003,
+        1,
+        "2024-03-30",
+        null,
+        "Active",
+        "Monthly",
+        1
+      ],
+      [
+        1007,
+        2,
+        "2025-05-04",
+        "2027-04-17",
+        "Active",
+        "Monthly",
+        0
+      ],
+      [
+        1009,
+        2,
+        "2026-07-01",
+        null,
+        "Active",
+        "Monthly",
+        1
+      ],
+      [
+        1017,
+        1,
+        "2026-07-04",
+        "2027-07-04",
+        "Active",
+        "Monthly",
+        0
+      ],
+      [
+        1024,
+        3,
+        "2026-03-19",
+        null,
+        "Active",
+        "Monthly",
+        0
+      ],
+      [
+        1029,
+        1,
+        "2025-08-07",
+        null,
+        "Suspended",
+        "Monthly",
+        0
+      ],
+      [
+        1035,
+        4,
+        "2024-11-15",
+        "2027-05-31",
+        "Active",
+        "Annual",
+        0
+      ],
+      [
+        1037,
+        4,
+        "2025-09-15",
+        null,
+        "Active",
+        "Monthly",
+        1
+      ],
+      [
+        1039,
+        1,
+        "2023-04-25",
+        null,
+        "Active",
+        "Monthly",
+        1
+      ]
+    ],
+    "answer": "Based on the data, memberships with a failed payment include membership IDs 1001, 1002, 1003, 1007, 1009, 1017, 1024, 1029, 1035, 1037, and 1039.",
+    "error": null,
+    "tokens": {
+      "input": 1229,
+      "output": 88
+    },
+    "cost_usd": 0.000158
+  },
+  {
+    "question": "Which members have reserved a facility their membership type has no access to?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    m.member_id,\n    m.first_name,\n    m.last_name,\n    f.facility_name,\n    mf.access_level\nFROM \n    Member m\nJOIN \n    Reservation r ON m.member_id = r.member_id\nJOIN \n    Facility f ON r.facility_id = f.facility_id\nJOIN \n    Membership ms ON m.membership_id = ms.membership_id\nJOIN \n    MembershipType mt ON ms.membership_type_id = mt.membership_type_id\nJOIN \n    MembershipFacility mf ON mt.membership_type_id = mf.membership_type_id AND f.facility_id = mf.facility_id\nWHERE \n    mf.access_level = 'Restricted'",
+    "columns": [
+      "member_id",
+      "first_name",
+      "last_name",
+      "facility_name",
+      "access_level"
+    ],
+    "rows": [
+      [
+        2075,
+        "Lily",
+        "Walker",
+        "Tennis Court 1",
+        "Restricted"
+      ]
+    ],
+    "answer": "Lily Walker reserved the Tennis Court 1, even though her membership type does not have access to that facility.",
+    "error": null,
+    "tokens": {
+      "input": 1046,
+      "output": 161
+    },
+    "cost_usd": 0.000169
+  },
+  {
+    "question": "Which family memberships have more members than their plan allows?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT \n    m.membership_id,\n    mt.type_name,\n    COUNT(*) AS member_count,\n    mt.max_members\nFROM \n    Membership m\nJOIN \n    MembershipType mt ON m.membership_type_id = mt.membership_type_id\nJOIN \n    Member mem ON mem.membership_id = m.membership_id\nGROUP BY \n    m.membership_id, mt.type_name, mt.max_members\nHAVING \n    COUNT(*) > mt.max_members",
+    "columns": [
+      "membership_id",
+      "type_name",
+      "member_count",
+      "max_members"
+    ],
+    "rows": [],
+    "answer": "No matching data was found; there are no family memberships with more members than their plan allows.",
+    "error": null,
+    "tokens": {
+      "input": 972,
+      "output": 113
+    },
+    "cost_usd": 0.000142
+  },
+  {
+    "question": "What was the total refunded amount last month?",
+    "strategy": "zero_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT SUM(amount) AS total_refunded_amount\nFROM Payment\nWHERE payment_status = 'Refunded'\n  AND strftime('%Y-%m', payment_date) = strftime('%Y-%m', date('now', '-1 month'))",
+    "columns": [
+      "total_refunded_amount"
+    ],
+    "rows": [
+      [
+        null
+      ]
+    ],
+    "answer": "No matching data was found for the total refunded amount last month.",
+    "error": null,
+    "tokens": {
+      "input": 915,
+      "output": 62
+    },
+    "cost_usd": 0.000116
+  },
+  {
+    "question": "How many active memberships are there for each membership type?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT mt.type_name, COUNT(m.membership_id) AS active_memberships\nFROM Membership m\nJOIN MembershipType mt ON m.membership_type_id = mt.membership_type_id\nWHERE m.status = 'Active'\nGROUP BY mt.type_name",
+    "columns": [
+      "type_name",
+      "active_memberships"
+    ],
+    "rows": [
+      [
+        "Family",
+        8
+      ],
+      [
+        "Individual",
+        9
+      ],
+      [
+        "Premium",
+        6
+      ],
+      [
+        "Student",
+        6
+      ]
+    ],
+    "answer": "There are 8 active Family memberships, 9 active Individual memberships, 6 active Premium memberships, and 6 active Student memberships.",
+    "error": null,
+    "tokens": {
+      "input": 975,
+      "output": 77
+    },
+    "cost_usd": 0.000128
+  },
+  {
+    "question": "Which membership type has generated the most completed payment revenue?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT mt.type_name, SUM(p.amount) AS total_revenue\nFROM MembershipType mt\nJOIN Membership m ON mt.membership_type_id = m.membership_type_id\nJOIN Payment p ON m.membership_id = p.membership_id\nWHERE p.payment_status = 'Completed'\nGROUP BY mt.type_name\nORDER BY total_revenue DESC\nLIMIT 1",
+    "columns": [
+      "type_name",
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        "Family",
+        36096
+      ]
+    ],
+    "answer": "The membership type that has generated the most completed payment revenue is \"Family,\" with a total of 36,096.",
+    "error": null,
+    "tokens": {
+      "input": 982,
+      "output": 98
+    },
+    "cost_usd": 0.000137
+  },
+  {
+    "question": "List the Family memberships and how many members each one covers.",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m1.first_name || ' ' || m1.last_name AS family_member, COUNT(m2.member_id) AS family_size\nFROM Member m1\nJOIN Member m2 ON m1.membership_id = m2.membership_id\nWHERE m1.member_role = 'Primary'\nGROUP BY m1.member_id",
+    "columns": [
+      "family_member",
+      "family_size"
+    ],
+    "rows": [
+      [
+        "Caleb Sorensen",
+        2
+      ],
+      [
+        "Hannah Davis",
+        4
+      ],
+      [
+        "Daniel Garcia",
+        1
+      ],
+      [
+        "Elijah Sorensen",
+        3
+      ],
+      [
+        "Oliver Hughes",
+        1
+      ],
+      [
+        "Chloe Vasquez",
+        2
+      ],
+      [
+        "Henry Walker",
+        1
+      ],
+      [
+        "Ella Parker",
+        1
+      ],
+      [
+        "Isaac Edwards",
+        1
+      ],
+      [
+        "Layla Ito",
+        1
+      ],
+      [
+        "Zoe Vasquez",
+        2
+      ],
+      [
+        "Lucas Nguyen",
+        3
+      ],
+      [
+        "Oliver Zimmerman",
+        3
+      ],
+      [
+        "Elijah Thompson",
+        1
+      ],
+      [
+        "Zoe Parker",
+        4
+      ],
+      [
+        "Henry Bennett",
+        1
+      ],
+      [
+        "Nora Kim",
+        1
+      ],
+      [
+        "Ella Miller",
+        1
+      ],
+      [
+        "Nathan Walker",
+        5
+      ],
+      [
+        "Ethan Underwood",
+        1
+      ],
+      [
+        "Elijah Dixon",
+        1
+      ],
+      [
+        "Stella Davis",
+        1
+      ],
+      [
+        "Layla Kim",
+        2
+      ],
+      [
+        "Noah Ito",
+        4
+      ],
+      [
+        "Ruby Dixon",
+        3
+      ],
+      [
+        "Nora Lopez",
+        3
+      ],
+      [
+        "Jack Walker",
+        2
+      ],
+      [
+        "Noah Foster",
+        1
+      ],
+      [
+        "Samuel Miller",
+        1
+      ],
+      [
+        "Maya Kim",
+        1
+      ],
+      [
+        "Nora Underwood",
+        1
+      ],
+      [
+        "Grace Bennett",
+        1
+      ],
+      [
+        "Liam Miller",
+        2
+      ],
+      [
+        "Chloe Edwards",
+        4
+      ],
+      [
+        "James Hughes",
+        4
+      ],
+      [
+        "Lily Garcia",
+        1
+      ],
+      [
+        "Maya Ito",
+        2
+      ],
+      [
+        "Layla Walker",
+        2
+      ],
+      [
+        "Dylan Sorensen",
+        1
+      ],
+      [
+        "Ethan Carter",
+        2
+      ],
+      [
+        "Jack Bennett",
+        1
+      ],
+      [
+        "Olivia Kim",
+        5
+      ],
+      [
+        "Lucas Foster",
+        4
+      ]
+    ],
+    "answer": "Here are the family memberships and the number of members each one covers:\n\n- Caleb Sorensen's family has 2 members\n- Hannah Davis's family has 4 members\n- Daniel Garcia's family has 1 member\n- Elijah Sorensen's family has 3 members\n- Oliver Hughes's family has 1 member\n- Chloe Vasquez's family has 2 members\n- Henry Walker's family has 1 member\n- Ella Parker's family has 1 member\n- Isaac Edwards's family has 1 member\n- Layla Ito's family has 1 member\n- Zoe Vasquez's family has 2 members\n- Lucas Nguyen's family has 3 members\n- Oliver Zimmerman's family has 3 members\n- Elijah Thompson's family has 1 member\n- Zoe Parker's family has 4 members\n- Henry Bennett's family has 1 member\n- Nora Kim's family has 1 member\n- Ella Miller's family has 1 member\n- Nathan Walker's family has 5 members\n- Ethan Underwood's family has 1 member\n- Elijah Dixon's family has 1 member\n- Stella Davis's family has 1 member\n- Layla Kim's family has 2 members\n- Noah Ito's family has 4 members\n- Ruby Dixon's family has 3 members\n- Nora Lopez's family has 3 members\n- Jack Walker's family has 2 members\n- Noah Foster's family has 1 member\n- Samuel Miller's family has 1 member\n- Maya Kim's family has 1 member\n- Nora Underwood's family has 1 member\n- Grace Bennett's family has 1 member\n- Liam Miller's family has 2 members\n- Chloe Edwards's family has 4 members\n- James Hughes's family has 4 members\n- Lily Garcia's family has 1 member\n- Maya Ito's family has 2 members\n- Layla Walker's family has 2 members\n- Dylan Sorensen's family has 1 member\n- Ethan Carter's family has 2 members\n- Jack Bennett's family has 1 member\n- Olivia Kim's family has 5 members\n- Lucas Foster's family has 4 members",
+    "error": null,
+    "tokens": {
+      "input": 1302,
+      "output": 518
+    },
+    "cost_usd": 0.000337
+  },
+  {
+    "question": "Which facilities can Student members access and at what access level?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT Facility.facility_name, MembershipFacility.access_level\nFROM Facility\nJOIN MembershipType ON Facility.facility_id = MembershipType.membership_type_id\nJOIN MembershipFacility ON MembershipType.membership_type_id = MembershipFacility.membership_type_id\nWHERE MembershipFacility.access_level = 'Included' AND MembershipType.type_name = 'Student'",
+    "columns": [
+      "facility_name",
+      "access_level"
+    ],
+    "rows": [],
+    "answer": "No matching data was found.",
+    "error": null,
+    "tokens": {
+      "input": 969,
+      "output": 72
+    },
+    "cost_usd": 0.000126
+  },
+  {
+    "question": "Who has the most reservations, and how many?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.first_name, m.last_name, COUNT(r.reservation_id) AS reservation_count\nFROM Member m\nJOIN Reservation r ON m.member_id = r.member_id\nGROUP BY m.member_id\nORDER BY reservation_count DESC\nLIMIT 1",
+    "columns": [
+      "first_name",
+      "last_name",
+      "reservation_count"
+    ],
+    "rows": [
+      [
+        "Layla",
+        "Walker",
+        4
+      ]
+    ],
+    "answer": "Layla Walker has the most reservations, with a total of 4.",
+    "error": null,
+    "tokens": {
+      "input": 963,
+      "output": 66
+    },
+    "cost_usd": 0.000123
+  },
+  {
+    "question": "How many reservations were cancelled for each facility?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT facility_id, COUNT(*) AS cancelled_reservations\nFROM Reservation\nWHERE status = 'Cancelled'\nGROUP BY facility_id",
+    "columns": [
+      "facility_id",
+      "cancelled_reservations"
+    ],
+    "rows": [
+      [
+        4001,
+        1
+      ],
+      [
+        4003,
+        1
+      ],
+      [
+        4004,
+        2
+      ],
+      [
+        4005,
+        1
+      ],
+      [
+        4006,
+        2
+      ],
+      [
+        4007,
+        6
+      ],
+      [
+        4008,
+        1
+      ],
+      [
+        4009,
+        2
+      ],
+      [
+        4010,
+        1
+      ]
+    ],
+    "answer": "There were 1 reservation canceled for facilities 4001, 4003, 4005, and 4008; 2 cancellations for facilities 4004, 4006, 4009, and 4010; and 6 cancellations for facility 4007.",
+    "error": null,
+    "tokens": {
+      "input": 988,
+      "output": 83
+    },
+    "cost_usd": 0.000132
+  },
+  {
+    "question": "Which memberships have a failed payment?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.membership_id, m.start_date, m.end_date, m.status\nFROM Membership m\nJOIN Payment p ON m.membership_id = p.membership_id\nWHERE p.payment_status = 'Failed'",
+    "columns": [
+      "membership_id",
+      "start_date",
+      "end_date",
+      "status"
+    ],
+    "rows": [
+      [
+        1001,
+        "2023-08-13",
+        "2027-02-08",
+        "Active"
+      ],
+      [
+        1001,
+        "2023-08-13",
+        "2027-02-08",
+        "Active"
+      ],
+      [
+        1002,
+        "2024-07-29",
+        "2026-09-29",
+        "Expired"
+      ],
+      [
+        1003,
+        "2024-03-30",
+        null,
+        "Active"
+      ],
+      [
+        1007,
+        "2025-05-04",
+        "2027-04-17",
+        "Active"
+      ],
+      [
+        1009,
+        "2026-07-01",
+        null,
+        "Active"
+      ],
+      [
+        1017,
+        "2026-07-04",
+        "2027-07-04",
+        "Active"
+      ],
+      [
+        1017,
+        "2026-07-04",
+        "2027-07-04",
+        "Active"
+      ],
+      [
+        1024,
+        "2026-03-19",
+        null,
+        "Active"
+      ],
+      [
+        1029,
+        "2025-08-07",
+        null,
+        "Suspended"
+      ],
+      [
+        1035,
+        "2024-11-15",
+        "2027-05-31",
+        "Active"
+      ],
+      [
+        1037,
+        "2025-09-15",
+        null,
+        "Active"
+      ],
+      [
+        1037,
+        "2025-09-15",
+        null,
+        "Active"
+      ],
+      [
+        1039,
+        "2023-04-25",
+        null,
+        "Active"
+      ]
+    ],
+    "answer": "Based on the data, memberships with a failed payment include membership IDs 1001, 1002, 1003, 1024, 1029, 1035, 1037, and 1039.",
+    "error": null,
+    "tokens": {
+      "input": 1223,
+      "output": 89
+    },
+    "cost_usd": 0.000158
+  },
+  {
+    "question": "Which members have reserved a facility their membership type has no access to?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.first_name, m.last_name, r.reservation_id, f.facility_name\nFROM Member m\nJOIN Reservation r ON m.member_id = r.member_id\nJOIN Facility f ON r.facility_id = f.facility_id\nJOIN Membership ms ON m.membership_id = ms.membership_id\nJOIN MembershipType mt ON ms.membership_type_id = mt.membership_type_id\nJOIN MembershipFacility mf ON mt.membership_type_id = mf.membership_type_id AND f.facility_id = mf.facility_id\nWHERE mf.access_level = 'Restricted'",
+    "columns": [
+      "first_name",
+      "last_name",
+      "reservation_id",
+      "facility_name"
+    ],
+    "rows": [
+      [
+        "Lily",
+        "Walker",
+        5049,
+        "Tennis Court 1"
+      ]
+    ],
+    "answer": "Lily Walker reserved the Tennis Court 1, even though her membership type does not have access to that facility.",
+    "error": null,
+    "tokens": {
+      "input": 1047,
+      "output": 138
+    },
+    "cost_usd": 0.00016
+  },
+  {
+    "question": "Which family memberships have more members than their plan allows?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.member_id, m.first_name, m.last_name, mem.membership_type_id\nFROM Member m\nJOIN Membership mem ON m.membership_id = mem.membership_id\nJOIN MembershipType mt ON mem.membership_type_id = mt.membership_type_id\nGROUP BY m.membership_id\nHAVING COUNT(m.member_id) > mt.max_members",
+    "columns": [
+      "member_id",
+      "first_name",
+      "last_name",
+      "membership_type_id"
+    ],
+    "rows": [],
+    "answer": "No matching data was found.",
+    "error": null,
+    "tokens": {
+      "input": 983,
+      "output": 79
+    },
+    "cost_usd": 0.00013
+  },
+  {
+    "question": "What was the total refunded amount last month?",
+    "strategy": "single_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT SUM(amount) AS total_refunded_amount\nFROM Payment\nWHERE payment_status = 'Refunded'\n  AND strftime('%Y-%m', payment_date) = '2026-09'",
+    "columns": [
+      "total_refunded_amount"
+    ],
+    "rows": [
+      [
+        null
+      ]
+    ],
+    "answer": "No matching data was found for the total refunded amount last month.",
+    "error": null,
+    "tokens": {
+      "input": 937,
+      "output": 53
+    },
+    "cost_usd": 0.000115
+  },
+  {
+    "question": "How many active memberships are there for each membership type?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT mt.type_name, COUNT(m.membership_id) AS active_memberships\nFROM Membership m\nJOIN MembershipType mt ON m.membership_type_id = mt.membership_type_id\nWHERE m.status = 'Active'\nGROUP BY mt.type_name",
+    "columns": [
+      "type_name",
+      "active_memberships"
+    ],
+    "rows": [
+      [
+        "Family",
+        8
+      ],
+      [
+        "Individual",
+        9
+      ],
+      [
+        "Premium",
+        6
+      ],
+      [
+        "Student",
+        6
+      ]
+    ],
+    "answer": "There are 8 active Family memberships, 9 active Individual memberships, 6 active Premium memberships, and 6 active Student memberships.",
+    "error": null,
+    "tokens": {
+      "input": 1038,
+      "output": 77
+    },
+    "cost_usd": 0.000135
+  },
+  {
+    "question": "Which membership type has generated the most completed payment revenue?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT mt.type_name, SUM(p.amount) AS total_revenue\nFROM MembershipType mt\nJOIN Membership m ON m.membership_type_id = mt.membership_type_id\nJOIN Payment p ON p.membership_id = m.membership_id\nWHERE p.payment_status = 'Completed'\nGROUP BY mt.membership_type_id, mt.type_name\nORDER BY total_revenue DESC\nLIMIT 1",
+    "columns": [
+      "type_name",
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        "Family",
+        36096
+      ]
+    ],
+    "answer": "The membership type that has generated the most completed payment revenue is \"Family,\" with a total of 36,096.",
+    "error": null,
+    "tokens": {
+      "input": 1051,
+      "output": 104
+    },
+    "cost_usd": 0.000147
+  },
+  {
+    "question": "List the Family memberships and how many members each one covers.",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT mt.type_name AS MembershipType, COUNT(mb.member_id) AS MemberCount\nFROM MembershipType mt\nJOIN Membership m ON m.membership_type_id = mt.membership_type_id\nJOIN Member mb ON mb.membership_id = m.membership_id\nGROUP BY mt.type_name",
+    "columns": [
+      "MembershipType",
+      "MemberCount"
+    ],
+    "rows": [
+      [
+        "Family",
+        41
+      ],
+      [
+        "Individual",
+        12
+      ],
+      [
+        "Premium",
+        22
+      ],
+      [
+        "Senior",
+        5
+      ],
+      [
+        "Student",
+        8
+      ]
+    ],
+    "answer": "The Family memberships cover 41 members.",
+    "error": null,
+    "tokens": {
+      "input": 1054,
+      "output": 67
+    },
+    "cost_usd": 0.000132
+  },
+  {
+    "question": "Which facilities can Student members access and at what access level?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT f.facility_name, mf.access_level\nFROM Facility f\nJOIN MembershipType mt ON mt.membership_type_id = (\n    SELECT m.membership_type_id\n    FROM Membership m\n    WHERE m.membership_id = (\n        SELECT mem.membership_id\n        FROM Member mem\n        WHERE mem.member_role = 'Primary' AND mem.member_id = (\n            SELECT m2.member_id\n            FROM Member m2\n            WHERE m2.member_id = mem.member_id\n        )\n    )\n)\nJOIN MembershipFacility mf ON mf.facility_id = f.facility_id\nWHERE mt.type_name = 'Student'",
+    "columns": [
+      "facility_name",
+      "access_level"
+    ],
+    "rows": [],
+    "answer": "No matching data was found for facilities accessible to Student members and their access levels.",
+    "error": null,
+    "tokens": {
+      "input": 1092,
+      "output": 142
+    },
+    "cost_usd": 0.000166
+  },
+  {
+    "question": "Who has the most reservations, and how many?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.member_id, m.first_name, m.last_name, COUNT(r.reservation_id) AS reservation_count\nFROM Member m\nJOIN Reservation r ON m.member_id = r.member_id\nGROUP BY m.member_id, m.first_name, m.last_name\nORDER BY reservation_count DESC\nLIMIT 1",
+    "columns": [
+      "member_id",
+      "first_name",
+      "last_name",
+      "reservation_count"
+    ],
+    "rows": [
+      [
+        2074,
+        "Layla",
+        "Walker",
+        4
+      ]
+    ],
+    "answer": "Layla Walker has the most reservations, with a total of 4.",
+    "error": null,
+    "tokens": {
+      "input": 1046,
+      "output": 78
+    },
+    "cost_usd": 0.000136
+  },
+  {
+    "question": "How many reservations were cancelled for each facility?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT facility_id, COUNT(*) AS cancelled_reservations\nFROM Reservation\nWHERE status = 'Cancelled'\nGROUP BY facility_id",
+    "columns": [
+      "facility_id",
+      "cancelled_reservations"
+    ],
+    "rows": [
+      [
+        4001,
+        1
+      ],
+      [
+        4003,
+        1
+      ],
+      [
+        4004,
+        2
+      ],
+      [
+        4005,
+        1
+      ],
+      [
+        4006,
+        2
+      ],
+      [
+        4007,
+        6
+      ],
+      [
+        4008,
+        1
+      ],
+      [
+        4009,
+        2
+      ],
+      [
+        4010,
+        1
+      ]
+    ],
+    "answer": "There were 1 reservation canceled for facilities 4001, 4003, 4005, and 4008; 2 cancellations for facilities 4004, 4006, 4009, and 4010; and 6 cancellations for facility 4007.",
+    "error": null,
+    "tokens": {
+      "input": 1051,
+      "output": 83
+    },
+    "cost_usd": 0.000138
+  },
+  {
+    "question": "Which memberships have a failed payment?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.membership_id, m.start_date, m.end_date, m.status\nFROM Membership m\nJOIN Payment p ON p.membership_id = m.membership_id\nWHERE p.payment_status = 'Failed'",
+    "columns": [
+      "membership_id",
+      "start_date",
+      "end_date",
+      "status"
+    ],
+    "rows": [
+      [
+        1001,
+        "2023-08-13",
+        "2027-02-08",
+        "Active"
+      ],
+      [
+        1001,
+        "2023-08-13",
+        "2027-02-08",
+        "Active"
+      ],
+      [
+        1002,
+        "2024-07-29",
+        "2026-09-29",
+        "Expired"
+      ],
+      [
+        1003,
+        "2024-03-30",
+        null,
+        "Active"
+      ],
+      [
+        1007,
+        "2025-05-04",
+        "2027-04-17",
+        "Active"
+      ],
+      [
+        1009,
+        "2026-07-01",
+        null,
+        "Active"
+      ],
+      [
+        1017,
+        "2026-07-04",
+        "2027-07-04",
+        "Active"
+      ],
+      [
+        1017,
+        "2026-07-04",
+        "2027-07-04",
+        "Active"
+      ],
+      [
+        1024,
+        "2026-03-19",
+        null,
+        "Active"
+      ],
+      [
+        1029,
+        "2025-08-07",
+        null,
+        "Suspended"
+      ],
+      [
+        1035,
+        "2024-11-15",
+        "2027-05-31",
+        "Active"
+      ],
+      [
+        1037,
+        "2025-09-15",
+        null,
+        "Active"
+      ],
+      [
+        1037,
+        "2025-09-15",
+        null,
+        "Active"
+      ],
+      [
+        1039,
+        "2023-04-25",
+        null,
+        "Active"
+      ]
+    ],
+    "answer": "Based on the data, memberships with a failed payment include membership IDs 1001, 1002, 1003, 1024, 1029, 1035, 1037, and 1039.",
+    "error": null,
+    "tokens": {
+      "input": 1286,
+      "output": 89
+    },
+    "cost_usd": 0.000164
+  },
+  {
+    "question": "Which members have reserved a facility their membership type has no access to?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.member_id, m.first_name, m.last_name, r.facility_id, f.facility_name\nFROM Member m\nJOIN Reservation r ON m.member_id = r.member_id\nJOIN Facility f ON r.facility_id = f.facility_id\nJOIN Membership ms ON m.membership_id = ms.membership_id\nJOIN MembershipType mt ON ms.membership_type_id = mt.membership_type_id\nJOIN MembershipFacility mf ON mt.membership_type_id = mf.membership_type_id AND f.facility_id = mf.facility_id\nWHERE r.status IN ('Pending', 'Confirmed')\n  AND mf.access_level = 'Restricted'",
+    "columns": [
+      "member_id",
+      "first_name",
+      "last_name",
+      "facility_id",
+      "facility_name"
+    ],
+    "rows": [],
+    "answer": "No matching data was found.",
+    "error": null,
+    "tokens": {
+      "input": 1112,
+      "output": 136
+    },
+    "cost_usd": 0.000166
+  },
+  {
+    "question": "Which family memberships have more members than their plan allows?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT m.membership_id, mt.type_name, COUNT(*) AS member_count, mt.max_members\nFROM Membership m\nJOIN MembershipType mt ON m.membership_type_id = mt.membership_type_id\nJOIN Member mb ON mb.membership_id = m.membership_id\nGROUP BY m.membership_id, mt.type_name, mt.max_members\nHAVING COUNT(*) > mt.max_members",
+    "columns": [
+      "membership_id",
+      "type_name",
+      "member_count",
+      "max_members"
+    ],
+    "rows": [],
+    "answer": "There are no family memberships with more members than their plan allows.",
+    "error": null,
+    "tokens": {
+      "input": 1051,
+      "output": 92
+    },
+    "cost_usd": 0.000142
+  },
+  {
+    "question": "What was the total refunded amount last month?",
+    "strategy": "multi_domain_double_shot",
+    "model": "gpt-4.1-nano",
+    "sql": "SELECT SUM(amount) AS total_refunded\nFROM Payment\nWHERE payment_status = 'Refunded'\n  AND strftime('%Y-%m', payment_date) = strftime('%Y-%m', date('now', '-1 month'))",
+    "columns": [
+      "total_refunded"
+    ],
+    "rows": [
+      [
+        null
+      ]
+    ],
+    "answer": "There was no refunded amount recorded last month.",
+    "error": null,
+    "tokens": {
+      "input": 1007,
+      "output": 57
+    },
+    "cost_usd": 0.000124
+  }
+]

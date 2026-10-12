@@ -1,3 +1,7 @@
 /class_resources
 
 .env
+natural_ai_reading.mdcountryclub.sqlite
+__pycache__/
+natural_ai_reading.md
+schema_details.md

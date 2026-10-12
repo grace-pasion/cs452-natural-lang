@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Country Club Concierge</title>
+<style>
+:root{--g:#1f5f45;--g2:#2e8b63;--gold:#c9a227;--bg:#f4f1e8;--ink:#1d2b24}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;padding:28px 20px;text-align:center;border-bottom:4px solid var(--gold)}
+header h1{margin:0;font-family:Georgia,serif;letter-spacing:1px}
+header p{margin:6px 0 0;opacity:.9}
+main{max-width:980px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:20px;margin-bottom:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:240px;padding:13px 14px;font-size:16px;border:2px solid #d8d3c3;border-radius:10px}
+input:focus,select:focus{outline:none;border-color:var(--g2)}
+select{padding:12px;border:2px solid #d8d3c3;border-radius:10px;font-size:14px;background:#fff}
+button{background:var(--g);color:#fff;border:0;padding:13px 24px;border-radius:10px;font-size:16px;cursor:pointer}
+button:hover{background:var(--g2)}button:disabled{opacity:.5}
+.chips{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#eef5f0;color:var(--g);border:1px solid #cfe3d6;padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer}
+.chip:hover{background:#dcece2}
+.q{font-weight:600;color:var(--g)}
+.answer{font-size:18px;line-height:1.5;margin:8px 0 14px;padding:12px 14px;background:#f7fbf8;border-left:4px solid var(--gold);border-radius:6px}
+pre{background:#1d2b24;color:#d7f5e3;padding:12px;border-radius:8px;overflow:auto;font-size:13px;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:var(--g);color:#fff;text-align:left;padding:7px}
+td{padding:6px 7px;border-bottom:1px solid #eee}
+.tablewrap{max-height:280px;overflow:auto;border-radius:8px;border:1px solid #eee}
+.meta{font-size:12px;color:#777;margin-top:8px}
+.err{background:#fdecec;border-left:4px solid #c0392b;padding:10px;border-radius:6px;color:#7b1e16}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid #ddd;border-top-color:var(--g);border-radius:50%;animation:s 1s linear infinite;vertical-align:middle}
+@keyframes s{to{transform:rotate(360deg)}}
+h4{margin:12px 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>⛳ Country Club Concierge</h1>
+  <p>Ask anything about memberships, members, payments, facilities and reservations.</p>
+</header>
+<main>
+  <div class="card">
+    <div class="row">
+      <input id="q" type="text" placeholder="e.g. Which membership type brings in the most revenue?" autofocus>
+      <select id="s"></select>
+      <button id="go">Ask</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="meta">Model: <span id="model"></span></div>
+  </div>
+  <div id="out"></div>
+</main>
+<script>
+const examples=[
+"How many active memberships are there for each membership type?",
+"Which membership type has generated the most completed payment revenue?",
+"List the Family memberships and how many members each one covers.",
+"Which facilities can Student members access and at what access level?",
+"Who has the most reservations, and how many?",
+"How many reservations were cancelled for each facility?",
+"Which memberships have a failed payment?",
+"What is the average party size for tennis reservations?",
+"Which members have no email address on file?",
+"Which active memberships have auto-renew turned off?"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"NULL").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+fetch("/api/config").then(r=>r.json()).then(c=>{
+  $("model").textContent=c.model;
+  $("s").innerHTML=c.strategies.map(x=>`<option>${x}</option>`).join("");
+});
+examples.forEach(e=>{const b=document.createElement("span");b.className="chip";b.textContent=e;
+  b.onclick=()=>{$("q").value=e;ask()};$("chips").appendChild(b)});
+$("go").onclick=ask;$("q").onkeydown=e=>{if(e.key==="Enter")ask()};
+async function ask(){
+  const question=$("q").value.trim();if(!question)return;
+  $("go").disabled=true;
+  const card=document.createElement("div");card.className="card";
+  card.innerHTML=`<div class="q">${esc(question)}</div><span class="spin"></span> Thinking…`;
+  $("out").prepend(card);
+  try{
+    const r=await (await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({question,strategy:$("s").value})})).json();
+    let h=`<div class="q">${esc(question)}</div>`;
+    if(r.error)h+=`<div class="err">${esc(r.error)}</div>`;
+    else h+=`<div class="answer">${esc(r.answer)}</div>`;
+    if(r.sql)h+=`<h4>SQL</h4><pre>${esc(r.sql)}</pre>`;
+    if(r.rows&&r.rows.length){
+      h+=`<h4>Data (${r.rows.length} row${r.rows.length>1?"s":""})</h4><div class="tablewrap"><table><tr>`+
+        r.columns.map(c=>`<th>${esc(c)}</th>`).join("")+"</tr>"+
+        r.rows.map(x=>"<tr>"+x.map(v=>`<td>${esc(v)}</td>`).join("")+"</tr>").join("")+"</table></div>";}
+    h+=`<div class="meta">${r.strategy} · ${r.model} · ${r.tokens.input}+${r.tokens.output} tokens · ~$${r.cost_usd}</div>`;
+    card.innerHTML=h;
+  }catch(e){card.innerHTML=`<div class="err">${esc(e)}</div>`}
+  $("go").disabled=false;
+}
+</script>
+</body>
+</html>
